@@ -1,0 +1,313 @@
+.ide-shell {
+  display: grid;
+  grid-template-columns: var(--ide-sidebar-width, 260px) 1fr;
+  grid-template-rows:
+    var(--ide-titlebar-height)
+    1fr
+    var(--ide-bottom-height, 200px)
+    var(--ide-statusbar-height, 22px);
+  grid-template-areas:
+    "titlebar titlebar"
+    "sidebar main"
+    "sidebar bottom"
+    "statusbar statusbar";
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ide-titlebar {
+  grid-area: titlebar;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: var(--ide-titlebar-height);
+  background: var(--ide-titlebar-bg);
+  border-bottom: 1px solid var(--ide-border);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ide-titlebar-title {
+  padding: 0 12px;
+  color: var(--ide-fg-muted);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ide-titlebar-menu {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+}
+
+.ide-titlebar-spacer {
+  flex: 1;
+  height: 100%;
+}
+
+.ide-titlebar-controls {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}
+
+.ide-titlebar-btn {
+  width: 46px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--ide-fg);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--ide-font);
+  transition: background 0.1s;
+}
+
+.ide-titlebar-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ide-titlebar-btn.close:hover {
+  background: #c42b1c;
+}
+
+.ide-region {
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ide-sidebar {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  background: var(--ide-sidebar-bg);
+  border-right: 1px solid var(--ide-border);
+}
+
+.ide-main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+}
+
+.ide-bottom {
+  grid-area: bottom;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--ide-border);
+}
+
+.ide-statusbar {
+  grid-area: statusbar;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--ide-spacing);
+  padding: 0 var(--ide-spacing);
+  background: var(--ide-statusbar-bg);
+  color: #fff;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.ide-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.ide-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+  pointer-events: auto;
+}
+
+.ide-slot[data-position="fixed"] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  flex: none;
+  max-width: 90vw;
+  max-height: 90vh;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  border-radius: var(--ide-radius);
+  background: var(--ide-bg);
+  border: 1px solid var(--ide-border);
+}
+
+.ide-statusbar .ide-slot {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  flex-direction: row;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Слоты внутри titlebar (регион topbar) — горизонтальная лента */
+.ide-titlebar .ide-slot {
+  flex: 0 0 auto;
+  width: auto;
+  height: 100%;
+  flex-direction: row;
+  align-items: center;
+  overflow: visible;
+}
+
+/* ===== Splash screen ===== */
+.ide-splash {
+  position: fixed;
+  top: var(--ide-titlebar-height, 32px);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: var(--ide-bg);
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  will-change: opacity;
+}
+
+.ide-splash-progress {
+  position: relative;
+  height: 3px;
+  background: var(--ide-border);
+  overflow: hidden;
+}
+
+.ide-splash-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: var(--ide-accent);
+  box-shadow: 0 0 10px var(--ide-accent);
+  transition: width 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ide-splash-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 32px;
+}
+
+.ide-splash-title {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--ide-fg);
+}
+
+.ide-splash-status {
+  font-size: 13px;
+  color: var(--ide-fg-muted);
+  min-height: 18px;
+  text-align: center;
+}
+
+.ide-splash-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  max-width: 640px;
+}
+
+.ide-splash-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--ide-radius);
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--ide-border);
+  color: var(--ide-fg-muted);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    transform 200ms ease;
+}
+
+.ide-splash-chip[data-status="loading"] {
+  border-color: var(--ide-accent);
+  color: var(--ide-fg);
+  background: rgba(10, 132, 255, 0.08);
+  animation: ide-splash-pulse 1.1s ease-in-out infinite;
+}
+
+.ide-splash-chip[data-status="ok"] {
+  color: #4ec9b0;
+  border-color: rgba(78, 201, 176, 0.35);
+  background: rgba(78, 201, 176, 0.06);
+}
+
+.ide-splash-chip[data-status="error"] {
+  color: #f48771;
+  border-color: rgba(244, 135, 113, 0.35);
+  background: rgba(244, 135, 113, 0.06);
+}
+
+.ide-splash-chip[data-status="skipped"] {
+  color: #dcdcaa;
+  border-color: rgba(220, 220, 170, 0.35);
+  background: rgba(220, 220, 170, 0.06);
+}
+
+.ide-splash-icon {
+  display: inline-block;
+  width: 12px;
+  font-family: var(--ide-font);
+  font-weight: 700;
+  text-align: center;
+}
+
+.ide-splash-chip[data-status="loading"] .ide-splash-icon {
+  animation: ide-splash-spin 1s linear infinite;
+}
+
+
+@keyframes ide-splash-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes ide-splash-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Слоты внутри overlay не должны перехватывать клики по пустому пространству —
+   клики принимают только сами модальные окна/попапы внутри них */
+.ide-overlay .ide-slot {
+  pointer-events: none;
+}
+
+.ide-overlay .ide-slot > * {
+  pointer-events: auto;
+}

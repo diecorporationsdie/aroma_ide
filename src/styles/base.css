@@ -1,0 +1,39 @@
+:root {
+  --ide-bg: #1e1e1e;
+  --ide-fg: #d4d4d4;
+  --ide-fg-muted: #8a8a8a;
+  --ide-border: #2b2b2b;
+  --ide-accent: #0a84ff;
+  --ide-sidebar-bg: #252526;
+  --ide-titlebar-bg: #1a1a1a;
+  --ide-statusbar-bg: #007acc;
+  --ide-overlay-bg: rgba(0, 0, 0, 0.6);
+  --ide-scroll-thumb: rgba(255, 255, 255, 0.18);
+  --ide-scroll-thumb-hover: rgba(255, 255, 255, 0.35);
+  --ide-font: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ide-font-size: 13px;
+  --ide-spacing: 8px;
+  --ide-radius: 4px;
+  --ide-titlebar-height: 32px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--ide-bg);
+  color: var(--ide-fg);
+  font-family: var(--ide-font);
+  font-size: var(--ide-font-size);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ide-scroll-thumb) transparent;
+}
