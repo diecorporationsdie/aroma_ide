@@ -174,4 +174,4 @@ export const api = {
 
 ## Лицензия
 
-TBD
+GNU GPL v3
