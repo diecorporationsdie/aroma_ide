@@ -1,0 +1,145 @@
+.plugin-menubar .menubar-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--ide-spacing);
+  font-size: 12px;
+}
+
+.plugin-menubar .menubar-trigger {
+  background: transparent;
+  color: inherit;
+  border: 0;
+  padding: 0 10px;
+  border-radius: var(--ide-radius);
+  font: inherit;
+  cursor: pointer;
+}
+
+.plugin-menubar .menubar-trigger:hover,
+.plugin-menubar .menubar-trigger:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+[data-plugin-id="menubar"].menubar-dropdown {
+  position: fixed;
+  min-width: 200px;
+  padding: 4px 0;
+  background: var(--ide-sidebar-bg);
+  border: 1px solid var(--ide-border);
+  border-radius: var(--ide-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-plugin-id="menubar"].menubar-dropdown[hidden] {
+  display: none;
+}
+
+[data-plugin-id="menubar"] .menubar-item {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--ide-fg);
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-plugin-id="menubar"] .menubar-item:hover,
+[data-plugin-id="menubar"] .menubar-item:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+[data-plugin-id="menubar"].menubar-modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ide-overlay-bg);
+  z-index: 1100;
+  pointer-events: auto;
+}
+
+[data-plugin-id="menubar"] .menubar-modal-card {
+  min-width: 320px;
+  max-width: 480px;
+  padding: 20px 24px;
+  background: var(--ide-sidebar-bg);
+  border: 1px solid var(--ide-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+[data-plugin-id="menubar"] .menubar-modal-card h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+[data-plugin-id="menubar"] .menubar-modal-card p {
+  margin: 0 0 10px;
+  color: var(--ide-fg-muted);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+[data-plugin-id="menubar"] .menubar-input {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  background: var(--ide-bg);
+  color: var(--ide-fg);
+  border: 1px solid var(--ide-border);
+  border-radius: var(--ide-radius);
+  font: inherit;
+  font-size: 12px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+[data-plugin-id="menubar"] .menubar-input:focus {
+  border-color: var(--ide-accent);
+}
+
+[data-plugin-id="menubar"] .menubar-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+[data-plugin-id="menubar"] .menubar-modal-btn {
+  padding: 6px 16px;
+  background: transparent;
+  color: var(--ide-fg);
+  border: 1px solid var(--ide-border);
+  border-radius: var(--ide-radius);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+[data-plugin-id="menubar"] .menubar-modal-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-plugin-id="menubar"] .menubar-modal-btn.primary {
+  background: var(--ide-accent);
+  border-color: var(--ide-accent);
+  color: #fff;
+}
+
+[data-plugin-id="menubar"] .menubar-modal-btn.primary:hover {
+  filter: brightness(1.1);
+}
