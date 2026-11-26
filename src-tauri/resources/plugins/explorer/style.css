@@ -1,0 +1,96 @@
+.explorer-header {
+  padding: 6px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ide-fg-muted);
+  border-bottom: 1px solid var(--ide-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.explorer-tree {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 0;
+  min-height: 0;
+}
+
+.explorer-node {
+  display: flex;
+  flex-direction: column;
+}
+
+.explorer-children {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+  padding-left: 4px;
+  border-left: 1px solid var(--ide-border);
+}
+
+.explorer-children[hidden] {
+  display: none;
+}
+
+.explorer-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+  font-size: 13px;
+  color: var(--ide-fg);
+}
+
+.explorer-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.explorer-row.is-dir {
+  color: var(--ide-fg);
+  font-weight: 500;
+}
+
+.explorer-row.is-file {
+  color: var(--ide-fg-muted);
+  font-weight: 400;
+}
+
+.explorer-row.expanded {
+  font-weight: 600;
+}
+
+.explorer-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  flex-shrink: 0;
+  color: var(--ide-fg-muted);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.explorer-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.explorer-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.explorer-empty {
+  padding: 24px 16px;
+  color: var(--ide-fg-muted);
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.5;
+}

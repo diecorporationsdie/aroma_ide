@@ -1,0 +1,8 @@
+{
+  "id": "menubar",
+  "name": "Menu Bar",
+  "version": "0.1.0",
+  "description": "Верхнее меню: Файл / Правка / Помощь",
+  "entry": "index.js",
+  "style": "style.css"
+}
