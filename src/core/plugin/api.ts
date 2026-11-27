@@ -22,7 +22,7 @@ export interface PluginCommandsApi {
   ): Disposable;
   execute<R = unknown>(id: string, args?: unknown): Promise<R | undefined>;
   has(id: string): boolean;
-}1
+}
 
 export interface PluginEventsApi {
   on<T>(event: string, listener: (payload: T) => void): Disposable;

@@ -158,7 +158,7 @@ export class CapabilityRegistry extends DisposableBase {
       const result = await mutator(record.api as T);
       let disposable: Disposable | undefined;
       if (result && typeof result === 'object' && 'dispose' in result && typeof result.dispose === 'function') {
-        disposable = record.injects.add(result as Disposable);
+        disposable = record.injects.add(result);
       }
       const value = result && typeof result === 'object' && 'dispose' in result
         ? undefined

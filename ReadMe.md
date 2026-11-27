@@ -1,177 +1,110 @@
 # AROMA IDE
 
-Плагинная IDE на Tauri + TypeScript. Ядро не знает про конкретные фичи — редактор, терминал, explorer живут как плагины.
+[![Поддержать проект](https://free-png.ru/wp-content/uploads/2021/12/free-png.ru-58-370x162.png)](https://pay.cloudtips.ru/p/1cc0e1e4)
 
-## Стек
+**Главный автор: Роман Агафонов**
 
-- Frontend: TypeScript, Vite, нативный ES2022 (без сборки плагинов)
-- Backend: Rust (Tauri 2) — только мост к ОС (`core.fs`, `pty`, сканирование плагинов)
-- UI: CSS-переменные, scoped `.plugin-<id>`, JSON-слоты раскладки
+---
 
-## Требования
+## Объявление войны
 
-| Инструмент | Версия | Зачем |
-|------------|--------|-------|
-| Node.js | >= 20 | frontend toolchain |
-| Rust (rustup) | stable | Tauri-ядро |
-| VS Build Tools | 2022, workload "Desktop development with C++" | MSVC линкер |
-| WebView2 | — | на Win10/11 уже есть |
+Двадцать лет нам продавали инструменты.
 
-Проверка:
+За право писать код мы платим подпиской. За право открыть свой же файл — лицензией. За право поставить плагин — маркетплейсом, который берёт процент с чужого труда. Нас убедили, что редактор кода — это продукт, а не среда обитания. Что за панель, вкладку и тему надо платить ежемесячно. Что «бесплатно» — значит «с телеметрией».
 
-    node --version
-    rustc --version
-    cargo --version
+Мы отказываемся.
 
-## Установка
+**AROMA IDE — это дар.** Не демо-версия, не «бесплатно до 5 проектов», не «pro-функции за $10/мес». Полный движок, полный API, полный исходник. Ставь, ломай, переделывай, раздавай. Без регистрации, без аккаунта, без телеметрии, без «войдите через». Твой компьютер — твой код — твои правила.
 
-    npm install
+Особенно — для российских разработчиков. Не потому, что остальным нельзя, а потому, что нам особенно настойчиво продают мысль, что без чужого облака и чужой подписки мы никто. Это неправда. Инструмент, который у тебя на диске и работает без интернета, стоит дороже любого SaaS-тарифа.
 
-## Команды
+Это не призыв к разрушению. Это призыв к тому, чтобы перестать арендовать то, что можно иметь.
 
-| Команда | Назначение |
-|---------|-----------|
-| npm run dev | фронт в браузере без Tauri (FS/PTY недоступны) |
-| npm run tauri dev | окно Tauri + hot reload фронта |
-| npm run tauri build | релизный .exe + инсталлятор |
-| npm run lint | ESLint (type-aware) |
-| npm run lint:fix | ESLint + автофиксы |
-| npm run build | tsc --noEmit + Vite production build |
+---
 
-Первый `tauri build` — 5–15 мин (компиляция крейтов), дальше инкрементально.
+## Что это
 
-## Артефакты сборки
+**AROMA IDE** — плагинная среда разработки на Tauri 2 (Rust) и TypeScript.
 
-    src-tauri/target/release/AROMA IDE.exe
-    src-tauri/target/release/bundle/msi/*.msi
-    src-tauri/target/release/bundle/nsis/*-setup.exe
+Ключевая идея: **ядро не знает ни одной фичи.** Нет «встроенного» редактора, «встроенного» терминала, «встроенного» проводника. Всё — плагины. Ядро даёт им только то, чего нет у браузерного JavaScript: файлы, процессы, порты, окна, раскладку.
 
-## Архитектура
+Из этого следует главное: **если этого ещё нет — это можно написать.** Открыть HTML-сайт. Собрать прошивку. Нарисовать схему и в реальном времени видеть, что отвечает плата на COM-порту. Всё это — плагины на одном и том же API.
 
-    src/
-      core/
-        disposable.ts       Disposable / DisposableStore / DisposableBase
-        errors.ts           PluginError, isolate()
-        event-bus.ts        pub/sub, изолированный от падений подписчиков
-        command-registry.ts register/execute, каждый register -> Disposable
-        storage.ts          Storage + StorageNamespace (per-plugin)
-        services.ts         ServiceRegistry (core.fs, pty и т.п.)
-        plugin/
-          api.ts            PluginContext — контракт для плагинов
-          source.ts         PluginSource (InMemory, Filesystem)
-          module-loader.ts  BlobModuleLoader (ESM через blob URL)
-          ui-host.ts        UiHost — точка монтажа слотов
-          context.ts        PluginContextImpl
-          registry.ts       активные плагины + их dispose
-          host.ts           PluginHost — activate/deactivate/list
-      main.ts               bootstrap: core -> host -> activateAll
-
-Правила ядра:
-
-- все register* возвращают Disposable
-- падение плагина не роняет ядро (isolate*)
-- API только async, версионируется через PluginManifest
-- запрещено: document/window/fs из плагина, синхронный API, хардкод раскладки
-# AROMA Plugins
-
-Плагин = папка `plugins/<id>/` с `plugin.json` + `index.js` (ESM, без сборки) + опциональный `style.css`.
-
-## Обязательный контракт
-
-- `activate(ctx)` — точка входа (опциональна).
-- `deactivate()` — очистка (опциональна).
-- `export const api` — **публичное API плагина** (опционально, но обязательно, если плагин хочет быть доступным другим).
-- JSDoc-типы для `api` — **обязательны**, если экспортируется `api`.
-
-## Публичный API
-
-```js
-/**
- * @typedef {Object} ExplorerApi
- * @property {(path: string) => Promise<void>} openFile
- * @property {() => string | null} getCurrentPath
- */
-
-/** @type {ExplorerApi} */
-export const api = {
-  openFile: async (path) => { /* ... */ },
-  getCurrentPath: () => currentPath,
-};
+```
+плагин  =  папка  +  plugin.json  +  index.js
 ```
 
-### Структура
+Без сборки. Без node_modules. Без компиляции. Скопировал папку — работает.
 
-    plugins/<id>/
-      plugin.json         манифест (id = имя папки)
-      index.js            ESM-модуль, БЕЗ сборки
-      style.css           опционально
+---
 
-### Манифест
+## Особенности
 
-    {
-      "id": "hello",
-      "name": "Hello",
-      "version": "0.0.1",
-      "entry": "index.js",
-      "style": "style.css"
-    }
+**Всё есть плагин.** Ядро — это реестр команд, шина событий, раскладка и мост к ОС. Любая фича — сменная. Не нравится редактор — выкинь и поставь другой. Он не «расширение», он полноправный житель.
 
-### Модуль
+**Плагины без сборки.** Чистый ESM. Правишь `index.js` — IDE подхватывает на лету, без перезапуска.
 
-    export function activate(ctx) {
-      ctx.commands.register('hello.greet', () => 'hi');
-      const sub = ctx.events.on('editor:save', (p) => console.log(p));
-      ctx.subscriptions.add(sub);
-    }
+**Плагины общаются между собой.** Три независимых механизма: команды (`ctx.commands`), события (`ctx.events`) и типизированные capability-контракты с проверкой версий. Зависимости разрешаются в топологическом порядке, циклы отсекаются, потерянная зависимость каскадно деактивирует потребителя — но не роняет IDE.
 
-    export function deactivate() {
-      // всё dispose-ится автоматически
-    }
+**Настоящий бэкенд.** Не «мост к ОС на 200 строк». Атомарная запись файлов (temp → `fsync` → `rename`), поиск по проекту на Rust, наблюдение за файлами с пакетированием событий, PTY с корректным UTF-8, последовательные порты с DTR/RTS для прошивки.
 
-### Context API
+**Живое железо.** `ctx.services.get('serial')` — и у тебя порт платы: `listPorts`, `open`, `write(Uint8Array)`, `setSignals` для сброса в загрузчик. Это и есть «от HTML до проектирования плат» — на одном API.
 
-| Поле | Методы |
-|------|--------|
-| ctx.commands | register(id, fn), execute(id, args), has(id) |
-| ctx.events | on(event, fn), emit(event, payload) |
-| ctx.ui | slot(region) -> sidebar / main / bottom / statusbar / overlay |
-| ctx.services | get(name) — core.fs, pty |
-| ctx.storage | get/set/delete/keys (namespace plugin.<id>) |
-| ctx.subscriptions | add(disposable) |
+**Терминал, который не врёт.** Русский текст не превращается в «крякозябры»: UTF-8 собирается потоково, даже если символ разорван между чанками. Ввод не блокирует IDE. При закрытии не остаётся процессов-сирот.
 
-### Куда класть
+**Ошибки, которые объясняют себя.** `NOT_FOUND: C:\project\main.ts: ...` — машиночитаемый код плюс путь. Не «что-то пошло не так».
 
-| Тип | Путь |
-|-----|------|
-| user | %APPDATA%\com.aroma.ide\plugins\<id>\ |
-| bundled | src-tauri/resources/plugins/<id>/ (вшивается инсталлятором) |
-| dev | ./plugins/<id>/ (только в tauri dev) |
+**Никакой телеметрии.** Ноль сетевых запросов. Работает офлайн. Данные лежат в твоём `%APPDATA%`, а не на чужом сервере.
 
-Приоритет: bundled -> user -> dev (dev переопределяет).
+---
 
-Установка = скопировать папку. Удаление = удалить папку. Перезапуск подхватит.
+## Плюсы
 
-## MVP-плагины
+| | |
+|---|---|
+| **Скорость** | Rust-бэкенд, нативный webview, без Electron. Зависимости в dev-сборке оптимизированы |
+| **Размер** | Бинарник — около 11 МБ. Не тащит Chromium и Node: webview уже есть в системе |
+| **Прозрачность** | GPL-3.0. Весь исходник перед тобой. Никаких бинарных блобов |
+| **Расширяемость** | Полный API с первого дня. Не нужно ждать, пока «добавят поддержку» |
+| **Автономность** | Офлайн. Без аккаунта. Без подписки. Без «войти, чтобы продолжить» |
+| **Долговечность** | Плагин — это текст. Он переживёт любую смену фреймворков |
 
-| id | Зависимости | Роль |
-|----|-------------|------|
-| explorer | core.fs | дерево файлов, открытие в редакторе |
-| editor | CodeMirror 6 | вкладки, редактирование, сохранение |
-| terminal | pty + xterm.js | встроенный шелл |
+---
 
-Ставятся как обычные плагины — в resources/plugins/ при сборке или в user-папку.
+## Быстрый старт
 
-## Раскладка (JSON-слоты)
+Нужны Node.js ≥ 20, Rust stable и WebView2 (на Win10/11 уже есть).
 
-    {
-      "sidebar": { "left": 260 },
-      "main": { "editor": "*" },
-      "bottom": { "terminal": 200 },
-      "statusbar": { "height": 22 }
-    }
+```bash
+npm install
+npm run tauri dev
+```
 
-Хранится в Storage. Ядро не хардкодит ни одной фичи — только раскладывает регионы.
+Собрать релиз:
+
+```bash
+npm run tauri build
+```
+
+---
+
+## Документация
+
+Всё остальное — в папке [`readme/`](readme/). Ядро здесь маленькое, а знаний много, поэтому документация разложена по назначению:
+
+| Документ | Кому | Что внутри |
+|----------|------|-----------|
+| [readme/plugins-quick.md](readme/plugins-quick.md) | **начни здесь** | Первый плагин за 5 минут. Главные правила |
+| [readme/plugins.md](readme/plugins.md) | Авторам плагинов | Полный справочник: манифест, `PluginContext`, все сервисы, IO, capabilities |
+| [readme/architecture.md](readme/architecture.md) | Тем, кто читает исходник | Устройство ядра и бэкенда, принципы, почему сделано именно так |
+| [readme/build.md](readme/build.md) | Сборка и отладка | Требования, команды, артефакты, логи, типовые проблемы |
+
+---
 
 ## Лицензия
 
-GNU GPL v3
+GPL-3.0. Бери и делай.
+
+<p align="center">
+  <sub>Сделано без венчурных денег. Назло тем, кто считает, что инструмент должен быть подпиской.</sub>
+</p>

@@ -25,8 +25,16 @@ export class MemoryStorageBackend implements StorageBackend {
   }
 }
 
+/**
+ * Кэш на namespace.
+ *
+ * Важно: `set`/`delete` пишут в кэш синхронно и отправляют точечный вызов
+ * `storage_set`/`storage_delete`, а не перезаписывают весь объект. Иначе два
+ * плагина, пишущих в соседние ключи одного namespace, затирали бы друг друга.
+ */
 export class Storage {
   private readonly cache = new Map<string, Record<string, unknown>>();
+  private readonly pending = new Map<string, Promise<void>>();
 
   constructor(private readonly backend: StorageBackend) {}
 
@@ -40,10 +48,22 @@ export class Storage {
       return bucket;
     };
 
-    const flush = async (): Promise<void> => {
-      const bucket = await load();
-      await this.backend.write(name, bucket);
+    /** Записи одного namespace сериализуются: порядок не должен зависеть от сети. */
+    const enqueue = (task: () => Promise<void>): Promise<void> => {
+      const prev = this.pending.get(name) ?? Promise.resolve();
+      const next = prev.then(task, task);
+      this.pending.set(
+        name,
+        next.catch(() => {}),
+      );
+      return next;
     };
+
+    const flush = (): Promise<void> =>
+      enqueue(async () => {
+        const bucket = await load();
+        await this.backend.write(name, bucket);
+      });
 
     return {
       async get<T>(key: string, fallback?: T): Promise<T | undefined> {
@@ -76,6 +96,8 @@ export class TauriStorageBackend implements StorageBackend {
       }
       return {};
     } catch (e) {
+      // Битый файл бэкенд уже отложил в `.corrupt-*.json`; IDE должна
+      // запуститься, а не упасть на настройках.
       console.warn('[storage] read failed', namespace, e);
       return {};
     }
@@ -83,7 +105,7 @@ export class TauriStorageBackend implements StorageBackend {
 
   async write(namespace: string, data: Record<string, unknown>): Promise<void> {
     try {
-      await invoke('storage_write', { namespace, data });
+      await invoke('storage_write', { namespace, data, merge: false });
     } catch (e) {
       console.warn('[storage] write failed', namespace, e);
     }
