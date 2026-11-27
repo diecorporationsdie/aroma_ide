@@ -56,6 +56,8 @@ export class PluginHost extends DisposableBase {
   async activate(id: string): Promise<void> {
     if (this.active.has(id)) throw new PluginError(id, 'already active');
 
+    // Кэш источника сбрасываем: за время между загрузками плагин могли
+    // переустановить или отредактировать.
     const manifest = (await this.deps.source.list()).find((m) => m.id === id);
     if (!manifest) throw new PluginError(id, 'not found in source');
 
@@ -94,6 +96,38 @@ export class PluginHost extends DisposableBase {
     await this.doDeactivate(id);
     this.registry.unregister(id);
     this.cascadeDependents(id);
+  }
+
+  /**
+   * Перезагрузка одного плагина: выгрузить модуль и загрузить заново.
+   *
+   * Нужна для горячей перезагрузки при правке `index.js`. Зависимые плагины
+   * не трогаем: их capabilities на время перезагрузки исчезают, но
+   * `cascadeDependents` вызывается только при явном удалении.
+   */
+  async reload(id: string): Promise<void> {
+    if (!this.active.has(id)) {
+      await this.activate(id);
+      return;
+    }
+    await this.doDeactivate(id);
+    this.registry.unregister(id);
+    await this.activate(id);
+  }
+
+  /** Перезагрузить несколько плагинов, сохранив порядок зависимостей. */
+  async reloadMany(ids: readonly string[]): Promise<void> {
+    const manifests = await this.deps.source.list();
+    const { ordered } = this.orderByDependencies(manifests);
+    const wanted = new Set(ids);
+    for (const manifest of ordered) {
+      if (!wanted.has(manifest.id)) continue;
+      try {
+        await this.reload(manifest.id);
+      } catch (e) {
+        console.error(`[plugin:${manifest.id}] reload failed`, e);
+      }
+    }
   }
 
   isActive(id: string): boolean {

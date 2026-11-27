@@ -1,7 +1,14 @@
 import { EventBus } from './core/event-bus';
 import { CommandRegistry } from './core/command-registry';
 import { Storage, MemoryStorageBackend, TauriStorageBackend } from './core/storage';
-import { ServiceRegistry, TauriFsService, TauriPtyService } from './core/services';
+import {
+  ServiceRegistry,
+  TauriFsService,
+  TauriFsToolsService,
+  TauriProcService,
+  TauriPtyService,
+  TauriSerialService,
+} from './core/services';
 import { LayoutManager, DomUiHost, SplashScreen } from './core/ui';
 import {
   BlobModuleLoader,
@@ -10,6 +17,7 @@ import {
   IORegistry,
   PluginHost,
 } from './core/plugin';
+import { listen } from '@tauri-apps/api/event';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
@@ -24,18 +32,25 @@ export interface CoreServices {
   dispose(): void;
 }
 
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI__' in window;
+}
+
 export function createCore(): CoreServices {
   const events = new EventBus();
   const commands = new CommandRegistry();
   const storage = new Storage(
-    typeof window !== 'undefined' && (window as unknown as { __TAURI__?: unknown }).__TAURI__
-      ? new TauriStorageBackend()
-      : new MemoryStorageBackend(),
+    isTauri() ? new TauriStorageBackend() : new MemoryStorageBackend(),
   );
   const services = new ServiceRegistry();
 
+  // Имена сервисов — публичный контракт плагинов. `core.fs` и `pty` уже
+  // использовались, остальные добавлены для новых возможностей.
   services.register('core.fs', new TauriFsService());
   services.register('pty', new TauriPtyService());
+  services.register('proc', new TauriProcService());
+  services.register('serial', new TauriSerialService());
+  services.register('fs.tools', new TauriFsToolsService());
   services.register('vendor.xterm', { Terminal, FitAddon });
 
   return {
@@ -79,9 +94,10 @@ async function bootstrap(root: HTMLElement): Promise<void> {
 
   const io = new IORegistry();
   const capabilities = new CapabilityRegistry();
+  const source = new FilesystemPluginSource();
 
   const host = new PluginHost({
-    source: new FilesystemPluginSource(),
+    source,
     loader: new BlobModuleLoader(),
     contextDeps: {
       commands: core.commands,
@@ -93,6 +109,25 @@ async function bootstrap(root: HTMLElement): Promise<void> {
       capabilities,
     },
   });
+
+  // --- Горячая перезагрузка плагинов -------------------------------------
+  // Бэкенд следит за каталогами плагинов и присылает id изменившихся файлов.
+  // Без этого правка index.js требовала бы перезапуска IDE — а это основной
+  // цикл разработки в плагинной IDE.
+  let unlistenPlugins: (() => void) | null = null;
+  if (isTauri()) {
+    try {
+      unlistenPlugins = await listen<{ ids: string[] }>('plugins:changed', (event) => {
+        const ids = event.payload?.ids ?? [];
+        if (ids.length === 0) return;
+        void host.reloadMany(ids).catch((e) => {
+          console.error('[plugins] hot reload failed', e);
+        });
+      });
+    } catch (e) {
+      console.warn('[plugins] hot reload unavailable', e);
+    }
+  }
 
   try {
     splash.setStatus('Поиск плагинов…');
@@ -130,12 +165,20 @@ async function bootstrap(root: HTMLElement): Promise<void> {
 
     const active = host.listActive();
     if (active.length === 0) {
+      // Причина важнее факта: «плагинов нет» и «плагины битые» — разные
+      // проблемы, и пользователь должен видеть, какая именно.
+      const diagnostics = await source.diagnostics().catch(() => []);
       splash.setStatus('Плагины не найдены');
-      renderFallback(
-        layout,
-        'Плагины не найдены',
-        'Проверьте папку resources/plugins/ (или plugins/).',
-      );
+      const hint =
+        diagnostics.length > 0
+          ? `Плагины найдены, но не загружены:\n${diagnostics
+              .map((d) => `${d.id}: ${d.error}`)
+              .join('\n')}`
+          : 'Проверьте папку resources/plugins/ (или plugins/).';
+      renderFallback(layout, 'Плагины не найдены', hint);
+      if (diagnostics.length > 0) {
+        console.warn('[plugins] diagnostics', diagnostics);
+      }
     }
 
     const elapsed = performance.now() - startedAt;
@@ -153,6 +196,7 @@ async function bootstrap(root: HTMLElement): Promise<void> {
   }
 
   window.addEventListener('beforeunload', () => {
+    unlistenPlugins?.();
     void host.shutdown();
     host.dispose();
     capabilities.dispose();
